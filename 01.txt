@@ -1,0 +1,98 @@
+1. 
+SELECT
+E.EMPLOYEE_ID 사번, E.DEPARTMENT_ID 부서번호, E.SALARY 연봉, ROUND(부서평균연봉,0) 부서평균연봉
+FROM EMPLOYEES E, (SELECT
+                  DEPARTMENT_ID, AVG(SALARY) 부서평균연봉
+                  FROM EMPLOYEES
+                  GROUP BY DEPARTMENT_ID) VT
+WHERE E.DEPARTMENT_ID=VT.DEPARTMENT_ID AND E.SALARY>부서평균연봉
+ORDER BY 부서평균연봉 DESC;
+
+2.
+SELECT
+VT.*
+FROM (SELECT
+         RANK() OVER(ORDER BY SALARY DESC) RANKING, LAST_NAME, FIRST_NAME, SALARY
+         FROM EMPLOYEES) VT
+WHERE RANKING BETWEEN 6 AND 10;
+
+3.
+SELECT
+to_char(e.hire_date,'yyyy') 년도, to_char(AVG(e.salary),'99,999') 평균급여
+FROM employees e, jobs j
+WHERE e.job_id=j.job_id
+AND j.job_title='Sales Manager'
+GROUP BY to_char(e.hire_date,'yyyy')
+ORDER BY 년도;
+
+4.
+SELECT
+E1.LAST_NAME 사원이름, NVL(E2.LAST_NAME,'<없음>') 매니저이름, 부서이름
+FROM EMPLOYEES E1, EMPLOYEES E2, (SELECT 
+                                               D.DEPARTMENT_ID, D.DEPARTMENT_NAME 부서이름
+                                               FROM DEPARTMENTS D, LOCATIONS L
+                                               WHERE D.LOCATION_ID=L.LOCATION_ID AND L.CITY='Seattle') VT
+WHERE E1.MANAGER_ID=E2.EMPLOYEE_ID(+) AND E1.DEPARTMENT_ID=VT.DEPARTMENT_ID
+ORDER BY E1.LAST_NAME;
+
+5.
+SELECT
+E.LAST_NAME 사원이름, D.DEPARTMENT_NAME, E.SALARY 급여
+FROM EMPLOYEES E, DEPARTMENTS D
+WHERE E.DEPARTMENT_ID=D.DEPARTMENT_ID AND 
+         (E.SALARY, D.DEPARTMENT_NAME) IN (SELECT
+                                                         MIN(E1.SALARY), D1.DEPARTMENT_NAME
+                                                         FROM EMPLOYEES E1, DEPARTMENTS D1
+                                                         WHERE E1.DEPARTMENT_ID=D1.DEPARTMENT_ID
+                                                         GROUP BY D1.DEPARTMENT_NAME)
+ORDER BY D.DEPARTMENT_NAME, E.LAST_NAME;
+
+6.
+1)
+SELECT
+L.CITY 도시이름, VT.평균급여,  VT.직원수
+FROM LOCATIONS L, (SELECT
+                           AVG(SALARY) 평균급여, D.LOCATION_ID, COUNT(D.LOCATION_ID) 직원수
+                           FROM EMPLOYEES E, DEPARTMENTS D
+                           WHERE E.DEPARTMENT_ID=D.DEPARTMENT_ID
+                           GROUP BY D.LOCATION_ID
+                           HAVING COUNT(D.LOCATION_ID)<10) VT
+WHERE L.LOCATION_ID=VT.LOCATION_ID
+ORDER BY VT.평균급여;
+
+2)
+SELECT
+L.CITY 도시이름, AVG(E.SALARY) 평균급여, COUNT(*) 직원수
+FROM LOCATIONS L, EMPLOYEES E, DEPARTMENTS D
+WHERE E.DEPARTMENT_ID=D.DEPARTMENT_ID AND D.LOCATION_ID=L.LOCATION_ID
+GROUP BY L.CITY
+HAVING COUNT(*)<10
+ORDER BY 평균급여;
+
+7. 
+1)
+SELECT
+J.JOB_TITLE, VT.평균급여
+FROM JOBS J, (SELECT
+                  TO_CHAR(AVG(SALARY),'99,999') 평균급여, JOB_ID
+                  FROM EMPLOYEES
+                  WHERE DEPARTMENT_ID=30
+                  GROUP BY JOB_ID
+                  HAVING AVG(SALARY)>=2000 ) VT
+WHERE J.JOB_ID=VT.JOB_ID
+ORDER  BY JOB_TITLE;
+
+2)
+SELECT
+J.JOB_TITLE 직책, TO_CHAR(AVG(E.SALARY),'99,999') 평균급여
+FROM JOBS J, EMPLOYEES E
+WHERE E.JOB_ID=J.JOB_ID AND E.DEPARTMENT_ID=30
+GROUP BY J.JOB_TITLE
+HAVING AVG(SALARY)>=200;
+
+8.
+SELECT
+E.EMPLOYEE_ID 사번, CONCAT(CONCAT(E.FIRST_NAME,' '), E.LAST_NAME) 이름
+FROM EMPLOYEES E, JOB_HISTORY JH
+WHERE E.EMPLOYEE_ID=JH.EMPLOYEE_ID AND JH.JOB_ID='AC_ACCOUNT';
+
